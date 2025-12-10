@@ -102,9 +102,7 @@ class BaseResource(Generic[T, CreateT, UpdateT]):
         Returns:
             Dictionary of headers including authorization.
         """
-        token = await self._client._authenticator.get_access_token_async(
-            self._async_http_client
-        )
+        token = await self._client._authenticator.get_access_token_async(self._async_http_client)
         return {
             "Authorization": token.authorization_header,
             "X-AP-Context": f"orgId={self._client.org_id}",
@@ -246,7 +244,8 @@ class BaseResource(Generic[T, CreateT, UpdateT]):
         if response.status_code == 204:
             return {}
 
-        return response.json()
+        result: dict[str, Any] = response.json()
+        return result
 
     async def _request_async(
         self,
@@ -292,7 +291,8 @@ class BaseResource(Generic[T, CreateT, UpdateT]):
         if response.status_code == 204:
             return {}
 
-        return response.json()
+        result: dict[str, Any] = response.json()
+        return result
 
     def _parse_response(self, data: dict[str, Any]) -> T:
         """Parse a single item response.

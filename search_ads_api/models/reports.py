@@ -4,7 +4,7 @@ This module contains models for requesting and receiving performance
 reports from the Apple Search Ads API.
 """
 
-from datetime import date, datetime
+from datetime import date
 from enum import StrEnum
 from typing import TYPE_CHECKING, Any
 
@@ -76,9 +76,7 @@ class ReportingRequest(BaseModel):
     granularity: GranularityType = GranularityType.DAILY
     group_by: list[ReportGroupBy] | None = Field(default=None, alias="groupBy")
     return_grand_totals: bool = Field(default=True, alias="returnGrandTotals")
-    return_records_with_no_metrics: bool = Field(
-        default=False, alias="returnRecordsWithNoMetrics"
-    )
+    return_records_with_no_metrics: bool = Field(default=False, alias="returnRecordsWithNoMetrics")
     return_row_totals: bool = Field(default=True, alias="returnRowTotals")
     time_zone: str = Field(default="UTC", alias="timeZone")
     selector: dict[str, Any] | None = None
@@ -129,7 +127,8 @@ class MetricData(BaseModel):
     avg_cpa: SpendRow | None = Field(default=None, alias="avgCPA")
     avg_cpt: SpendRow | None = Field(default=None, alias="avgCPT")
     local_spend: SpendRow | None = Field(default=None, alias="localSpend")
-    conversion_rate: float | None = Field(default=None, alias="conversionRate")  # Can be None when no taps
+    # Can be None when no taps
+    conversion_rate: float | None = Field(default=None, alias="conversionRate")
 
 
 class ReportMetadata(BaseModel):
@@ -260,8 +259,7 @@ class ReportingResponse(BaseModel):
             import pandas as pd
         except ImportError:
             raise ImportError(
-                "pandas is required for to_dataframe(). "
-                "Install with: pip install asa-api[pandas]"
+                "pandas is required for to_dataframe(). Install with: pip install asa-api[pandas]"
             ) from None
 
         rows_data: list[dict[str, Any]] = []
@@ -273,7 +271,7 @@ class ReportingResponse(BaseModel):
             if row.metadata:
                 meta_dict = row.metadata.model_dump(by_alias=False, exclude_none=True)
                 # Flatten bid_amount if present
-                if "bid_amount" in meta_dict and meta_dict["bid_amount"]:
+                if meta_dict.get("bid_amount"):
                     meta_dict["bid_amount"] = meta_dict["bid_amount"].get("amount")
                 base_data.update(meta_dict)
 
@@ -282,7 +280,7 @@ class ReportingResponse(BaseModel):
                 total_dict = row.total.model_dump(by_alias=False, exclude_none=True)
                 # Flatten spend fields
                 for field in ["avg_cpa", "avg_cpt", "local_spend"]:
-                    if field in total_dict and total_dict[field]:
+                    if total_dict.get(field):
                         total_dict[field] = total_dict[field].get("amount")
                 base_data.update(total_dict)
 

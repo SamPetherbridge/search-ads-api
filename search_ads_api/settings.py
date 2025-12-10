@@ -67,9 +67,7 @@ class Settings(BaseSettings):
         case_sensitive=False,
     )
 
-    client_id: str = Field(
-        description="Apple Search Ads API client ID (starts with SEARCHADS.)"
-    )
+    client_id: str = Field(description="Apple Search Ads API client ID (starts with SEARCHADS.)")
     team_id: str = Field(description="Apple Developer team ID")
     key_id: str = Field(description="API key identifier")
     org_id: int = Field(description="Apple Search Ads organization ID")
@@ -98,14 +96,10 @@ class Settings(BaseSettings):
         has_path = self.private_key_path is not None
 
         if has_key and has_path:
-            raise ValueError(
-                "Provide either 'private_key' or 'private_key_path', not both"
-            )
+            raise ValueError("Provide either 'private_key' or 'private_key_path', not both")
 
         if not has_key and not has_path:
-            raise ValueError(
-                "Must provide either 'private_key' or 'private_key_path'"
-            )
+            raise ValueError("Must provide either 'private_key' or 'private_key_path'")
 
         return self
 
@@ -125,12 +119,8 @@ class Settings(BaseSettings):
             try:
                 return self.private_key_path.read_text()
             except FileNotFoundError as e:
-                raise ValueError(
-                    f"Private key file not found: {self.private_key_path}"
-                ) from e
+                raise ValueError(f"Private key file not found: {self.private_key_path}") from e
             except PermissionError as e:
-                raise ValueError(
-                    f"Cannot read private key file: {self.private_key_path}"
-                ) from e
+                raise ValueError(f"Cannot read private key file: {self.private_key_path}") from e
 
         raise ValueError("No private key configured")

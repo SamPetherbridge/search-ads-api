@@ -119,9 +119,7 @@ class ReportResource(BaseResource[ReportingResponse, ReportingRequest, Reporting
             request["selector"] = selector
         else:
             # Default selector with required orderBy
-            request["selector"] = {
-                "orderBy": [{"field": "localSpend", "sortOrder": "DESCENDING"}]
-            }
+            request["selector"] = {"orderBy": [{"field": "localSpend", "sortOrder": "DESCENDING"}]}
 
         return request
 
@@ -307,9 +305,7 @@ class ReportResource(BaseResource[ReportingResponse, ReportingRequest, Reporting
             timezone=timezone,
         )
 
-        data = await self._request_async(
-            "POST", f"campaigns/{campaign_id}/adgroups", json=request
-        )
+        data = await self._request_async("POST", f"campaigns/{campaign_id}/adgroups", json=request)
         return self._parse_report_response(data)
 
     def keywords(
@@ -407,9 +403,7 @@ class ReportResource(BaseResource[ReportingResponse, ReportingRequest, Reporting
             timezone=timezone,
         )
 
-        data = await self._request_async(
-            "POST", f"campaigns/{campaign_id}/keywords", json=request
-        )
+        data = await self._request_async("POST", f"campaigns/{campaign_id}/keywords", json=request)
         return self._parse_report_response(data)
 
     def search_terms(
@@ -458,9 +452,7 @@ class ReportResource(BaseResource[ReportingResponse, ReportingRequest, Reporting
             timezone=timezone,
         )
 
-        data = self._request(
-            "POST", f"campaigns/{campaign_id}/searchterms", json=request
-        )
+        data = self._request("POST", f"campaigns/{campaign_id}/searchterms", json=request)
         return self._parse_report_response(data)
 
     async def search_terms_async(

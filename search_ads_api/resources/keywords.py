@@ -3,7 +3,7 @@
 Provides methods for managing targeting keywords and negative keywords.
 """
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 
@@ -72,9 +72,7 @@ class KeywordResource(WritableResource[Keyword, KeywordCreate, KeywordUpdate]):
         super().__init__(client)
         self.campaign_id = campaign_id
         self.ad_group_id = ad_group_id
-        self.base_path = (
-            f"campaigns/{campaign_id}/adgroups/{ad_group_id}/targetingkeywords"
-        )
+        self.base_path = f"campaigns/{campaign_id}/adgroups/{ad_group_id}/targetingkeywords"
 
     def create_bulk(self, keywords: list[KeywordCreate]) -> PaginatedResponse[Keyword]:
         """Create multiple keywords at once.
@@ -98,9 +96,7 @@ class KeywordResource(WritableResource[Keyword, KeywordCreate, KeywordUpdate]):
         response = self._request("POST", "bulk", json=data)
         return self._parse_list_response(response)
 
-    async def create_bulk_async(
-        self, keywords: list[KeywordCreate]
-    ) -> PaginatedResponse[Keyword]:
+    async def create_bulk_async(self, keywords: list[KeywordCreate]) -> PaginatedResponse[Keyword]:
         """Create multiple keywords at once asynchronously.
 
         Args:
@@ -113,9 +109,7 @@ class KeywordResource(WritableResource[Keyword, KeywordCreate, KeywordUpdate]):
         response = await self._request_async("POST", "bulk", json=data)
         return self._parse_list_response(response)
 
-    def update_bulk(
-        self, updates: list[tuple[int, KeywordUpdate]]
-    ) -> PaginatedResponse[Keyword]:
+    def update_bulk(self, updates: list[tuple[int, KeywordUpdate]]) -> PaginatedResponse[Keyword]:
         """Update multiple keywords at once.
 
         Args:
@@ -220,9 +214,7 @@ class NegativeKeywordResource(
         self.ad_group_id = ad_group_id
 
         if ad_group_id is not None:
-            self.base_path = (
-                f"campaigns/{campaign_id}/adgroups/{ad_group_id}/negativekeywords"
-            )
+            self.base_path = f"campaigns/{campaign_id}/adgroups/{ad_group_id}/negativekeywords"
         else:
             self.base_path = f"campaigns/{campaign_id}/negativekeywords"
 
@@ -266,9 +258,7 @@ class NegativeKeywordResource(
             "Negative keywords cannot be updated. Delete and recreate instead."
         )
 
-    async def update_async(
-        self, resource_id: int, data: _NegativeKeywordUpdate
-    ) -> NegativeKeyword:
+    async def update_async(self, resource_id: int, data: _NegativeKeywordUpdate) -> NegativeKeyword:
         """Update is not supported for negative keywords.
 
         Raises:

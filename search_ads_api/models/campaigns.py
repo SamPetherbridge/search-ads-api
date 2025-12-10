@@ -6,7 +6,7 @@ advertising campaigns on the Apple Search Ads platform.
 
 from datetime import datetime
 from enum import StrEnum
-from typing import Annotated
+from typing import Annotated, Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -188,8 +188,8 @@ class Campaign(BaseModel):
     )
     start_time: datetime | None = Field(default=None, alias="startTime")
     end_time: datetime | None = Field(default=None, alias="endTime")
-    loc_invoice_details: dict | None = Field(default=None, alias="locInvoiceDetails")
-    budget_orders: list[dict] | None = Field(default=None, alias="budgetOrders")
+    loc_invoice_details: dict[str, Any] | None = Field(default=None, alias="locInvoiceDetails")
+    budget_orders: list[dict[str, Any]] | None = Field(default=None, alias="budgetOrders")
     payment_model: str | None = Field(default=None, alias="paymentModel")
 
 
@@ -219,17 +219,13 @@ class CampaignCreate(BaseModel):
     adam_id: int = Field(alias="adamId")
     countries_or_regions: list[str] = Field(alias="countriesOrRegions")
     status: CampaignStatus = CampaignStatus.ENABLED
-    ad_channel_type: AdChannelType = Field(
-        default=AdChannelType.SEARCH, alias="adChannelType"
-    )
-    billing_event: BillingEvent = Field(
-        default=BillingEvent.TAPS, alias="billingEvent"
-    )
+    ad_channel_type: AdChannelType = Field(default=AdChannelType.SEARCH, alias="adChannelType")
+    billing_event: BillingEvent = Field(default=BillingEvent.TAPS, alias="billingEvent")
     supply_sources: list[CampaignSupplySource] = Field(alias="supplySources")
     start_time: datetime | None = Field(default=None, alias="startTime")
     end_time: datetime | None = Field(default=None, alias="endTime")
-    loc_invoice_details: dict | None = Field(default=None, alias="locInvoiceDetails")
-    budget_orders: list[dict] | None = Field(default=None, alias="budgetOrders")
+    loc_invoice_details: dict[str, Any] | None = Field(default=None, alias="locInvoiceDetails")
+    budget_orders: list[dict[str, Any]] | None = Field(default=None, alias="budgetOrders")
     payment_model: str | None = Field(default=None, alias="paymentModel")
 
 
@@ -256,4 +252,4 @@ class CampaignUpdate(BaseModel):
     daily_budget_amount: Money | None = Field(default=None, alias="dailyBudgetAmount")
     status: CampaignStatus | None = None
     countries_or_regions: list[str] | None = Field(default=None, alias="countriesOrRegions")
-    loc_invoice_details: dict | None = Field(default=None, alias="locInvoiceDetails")
+    loc_invoice_details: dict[str, Any] | None = Field(default=None, alias="locInvoiceDetails")

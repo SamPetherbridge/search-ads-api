@@ -4,7 +4,7 @@ Ad groups are contained within campaigns and define targeting
 criteria, bids, and contain keywords and ads.
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Annotated, Any
 
@@ -255,9 +255,7 @@ class AdGroupCreate(BaseModel):
     targeting_dimensions: TargetingDimensions | None = Field(
         default=None, alias="targetingDimensions"
     )
-    start_time: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc), alias="startTime"
-    )
+    start_time: datetime = Field(default_factory=lambda: datetime.now(UTC), alias="startTime")
     end_time: datetime | None = Field(default=None, alias="endTime")
     pricing_model: PricingModel = Field(default=PricingModel.CPC, alias="pricingModel")
 

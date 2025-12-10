@@ -10,9 +10,8 @@ The authentication flow:
 4. Automatically refresh when the token expires
 """
 
-import time
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Self
 
@@ -65,7 +64,7 @@ class AccessToken:
             True if the token is expired or will expire within
             the refresh buffer period.
         """
-        return datetime.now(timezone.utc) >= (self.expires_at - TOKEN_REFRESH_BUFFER)
+        return datetime.now(UTC) >= (self.expires_at - TOKEN_REFRESH_BUFFER)
 
     @property
     def authorization_header(self) -> str:
@@ -165,14 +164,10 @@ class Authenticator:
             ConfigurationError: If the key cannot be loaded.
         """
         if private_key and private_key_path:
-            raise ConfigurationError(
-                "Provide either 'private_key' or 'private_key_path', not both"
-            )
+            raise ConfigurationError("Provide either 'private_key' or 'private_key_path', not both")
 
         if not private_key and not private_key_path:
-            raise ConfigurationError(
-                "Must provide either 'private_key' or 'private_key_path'"
-            )
+            raise ConfigurationError("Must provide either 'private_key' or 'private_key_path'")
 
         if private_key:
             logger.debug("Using provided private key string")
@@ -201,7 +196,7 @@ class Authenticator:
         Returns:
             The encoded JWT client secret.
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         expiration = now + MAX_CLIENT_SECRET_LIFETIME
 
         headers = {
@@ -240,7 +235,7 @@ class Authenticator:
         Returns:
             The JWT client secret, generating a new one if needed.
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         if (
             self._client_secret is None
@@ -284,7 +279,9 @@ class Authenticator:
 
         if response.status_code != 200:
             error_data = response.json() if response.content else {}
-            error_msg = error_data.get("error_description", error_data.get("error", "Unknown error"))
+            error_msg = error_data.get(
+                "error_description", error_data.get("error", "Unknown error")
+            )
             raise AuthenticationError(
                 f"Failed to obtain access token: {error_msg}",
                 status_code=response.status_code,
@@ -293,7 +290,7 @@ class Authenticator:
 
         token_data = response.json()
         expires_in = token_data.get("expires_in", 3600)
-        expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
+        expires_at = datetime.now(UTC) + timedelta(seconds=expires_in)
 
         token = AccessToken(
             token=token_data["access_token"],
@@ -304,9 +301,7 @@ class Authenticator:
         logger.info("Obtained new access token, expires at %s", expires_at)
         return token
 
-    async def _request_access_token_async(
-        self, http_client: httpx.AsyncClient
-    ) -> AccessToken:
+    async def _request_access_token_async(self, http_client: httpx.AsyncClient) -> AccessToken:
         """Request a new access token from Apple asynchronously.
 
         Args:
@@ -339,7 +334,9 @@ class Authenticator:
 
         if response.status_code != 200:
             error_data = response.json() if response.content else {}
-            error_msg = error_data.get("error_description", error_data.get("error", "Unknown error"))
+            error_msg = error_data.get(
+                "error_description", error_data.get("error", "Unknown error")
+            )
             raise AuthenticationError(
                 f"Failed to obtain access token: {error_msg}",
                 status_code=response.status_code,
@@ -348,7 +345,7 @@ class Authenticator:
 
         token_data = response.json()
         expires_in = token_data.get("expires_in", 3600)
-        expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
+        expires_at = datetime.now(UTC) + timedelta(seconds=expires_in)
 
         token = AccessToken(
             token=token_data["access_token"],
@@ -373,9 +370,7 @@ class Authenticator:
 
         return self._access_token
 
-    async def get_access_token_async(
-        self, http_client: httpx.AsyncClient
-    ) -> AccessToken:
+    async def get_access_token_async(self, http_client: httpx.AsyncClient) -> AccessToken:
         """Get a valid access token asynchronously, refreshing if necessary.
 
         Args:
@@ -443,9 +438,9 @@ class Authenticator:
         try:
             if env_file is None:
                 # Only load from environment variables
-                settings = Settings(_env_file=None)  # type: ignore[call-arg]
+                settings = Settings(_env_file=None)
             else:
-                settings = Settings(_env_file=env_file)  # type: ignore[call-arg]
+                settings = Settings(_env_file=env_file)
         except ValidationError as e:
             # Convert pydantic validation errors to ConfigurationError
             errors = e.errors()

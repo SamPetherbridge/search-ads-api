@@ -310,7 +310,7 @@ class PaginatedResponse(BaseModel, Generic[T]):
     pagination: PageDetail | None = None
     error: dict[str, Any] | None = None
 
-    def __iter__(self) -> Iterator[T]:
+    def __iter__(self) -> Iterator[T]:  # type: ignore[override]
         """Iterate over the items in this page."""
         return iter(self.data)
 

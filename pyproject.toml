@@ -41,6 +41,7 @@ pandas = [
 ]
 dev = [
     "pandas>=2.2.0",
+    "pandas-stubs>=2.2.0",
     "pytest>=8.3.0",
     "pytest-asyncio>=0.24.0",
     "pytest-cov>=6.0.0",
@@ -57,7 +58,7 @@ docs = [
 
 [project.urls]
 Homepage = "https://github.com/SamPetherbridge/search-ads-api"
-Documentation = "https://sampetherbridge.github.io/search-ads-api"
+Documentation = "https://search-ads-api.peth.au"
 Repository = "https://github.com/SamPetherbridge/search-ads-api"
 Issues = "https://github.com/SamPetherbridge/search-ads-api/issues"
 
@@ -113,6 +114,7 @@ select = [
 ignore = [
     "D100",   # Missing docstring in public module
     "D104",   # Missing docstring in public package
+    "UP046",  # Generic class uses Generic subclass instead of type params (requires invasive changes)
 ]
 
 [tool.ruff.lint.pydocstyle]

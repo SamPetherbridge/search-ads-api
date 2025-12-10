@@ -42,8 +42,8 @@ __all__ = [
     "ConfigurationError",
     "NotFoundError",
     "RateLimitError",
-    "ValidationError",
     "Settings",
+    "ValidationError",
     "configure_logging",
 ]
 
