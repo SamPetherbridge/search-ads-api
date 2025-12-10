@@ -1,0 +1,71 @@
+site_name: Search Ads API
+site_description: A modern, fully-typed Python client for the Apple Search Ads API
+site_url: https://sampetherbridge.github.io/search-ads-api
+repo_url: https://github.com/SamPetherbridge/search-ads-api
+repo_name: SamPetherbridge/search-ads-api
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: deep purple
+      accent: purple
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: deep purple
+      accent: purple
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - attr_list
+  - md_in_html
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_source: true
+            show_root_heading: true
+            heading_level: 2
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Authentication: getting-started/authentication.md
+    - Quick Start: getting-started/quickstart.md
+  - User Guide:
+    - Campaigns: guide/campaigns.md
+    - Ad Groups: guide/ad-groups.md
+    - Keywords: guide/keywords.md
+    - Reports: guide/reports.md
+    - Async Usage: guide/async.md
+  - API Reference:
+    - Client: api/client.md
+    - Models: api/models.md
+    - Exceptions: api/exceptions.md
