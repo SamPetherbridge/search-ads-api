@@ -4,12 +4,12 @@ build-backend = "hatchling.build"
 
 [project]
 name = "asa-api-client"
-version = "0.1.0"
+version = "0.1.1"
 description = "A modern Python client for the Apple Search Ads API with full type safety and async support"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.13"
-authors = [{ name = "Peth Pty Ltd", email = "hello@peth.com.au" }]
+authors = [{ name = "Sam Petherbridge", email = "hello@peth.me" }]
 keywords = [
     "apple",
     "search-ads",
