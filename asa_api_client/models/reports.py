@@ -340,12 +340,17 @@ class ImpressionShareReportRow(BaseModel):
     """A row in an impression share report.
 
     Impression share shows how often your ads appeared compared
-    to the total available impressions.
+    to the total available impressions. Values are percentage ranges.
 
     Attributes:
-        metadata: Information about the entity.
-        impression_share: Your share of impressions (0.0 to 1.0).
+        metadata: Information about the entity (keyword, ad group, campaign).
+        impression_share: Your share of impressions as a percentage range.
+        low_impression_share: Low end of impression share range.
+        high_impression_share: High end of impression share range.
         rank: Your rank compared to competitors.
+        low_rank: Low end of rank range.
+        high_rank: High end of rank range.
+        search_popularity: Popularity of the search term (0-5 scale).
     """
 
     model_config = ConfigDict(populate_by_name=True, extra="ignore")
@@ -357,3 +362,130 @@ class ImpressionShareReportRow(BaseModel):
     rank: int | None = None
     low_rank: int | None = Field(default=None, alias="lowRank")
     high_rank: int | None = Field(default=None, alias="highRank")
+    search_popularity: int | None = Field(default=None, alias="searchPopularity")
+
+
+class ImpressionShareDateRange(StrEnum):
+    """Date range options for weekly impression share reports."""
+
+    LAST_WEEK = "LAST_WEEK"
+    LAST_2_WEEKS = "LAST_2_WEEKS"
+    LAST_4_WEEKS = "LAST_4_WEEKS"
+
+
+class ImpressionShareReportStatus(StrEnum):
+    """Status of an impression share report."""
+
+    QUEUED = "QUEUED"
+    RUNNING = "RUNNING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+
+
+class ImpressionShareReportRequest(BaseModel):
+    """Request model for creating an impression share report.
+
+    Impression share reports are async - you create a report request,
+    then poll for results.
+
+    Example:
+        Create a daily impression share report::
+
+            request = ImpressionShareReportRequest(
+                name="my_report",
+                start_time=date(2024, 1, 1),
+                end_time=date(2024, 1, 31),
+                granularity=GranularityType.DAILY,
+            )
+    """
+
+    model_config = ConfigDict(populate_by_name=True, extra="ignore")
+
+    name: str = "impression_share_report"
+    start_time: date = Field(alias="startTime")
+    end_time: date = Field(alias="endTime")
+    granularity: GranularityType = GranularityType.DAILY
+    date_range: ImpressionShareDateRange | None = Field(default=None, alias="dateRange")
+    selector: dict[str, Any] | None = None
+    return_records_with_no_metrics: bool = Field(default=True, alias="returnRecordsWithNoMetrics")
+    return_row_totals: bool = Field(default=False, alias="returnRowTotals")
+    return_grand_totals: bool = Field(default=False, alias="returnGrandTotals")
+
+
+class ImpressionShareReport(BaseModel):
+    """An impression share report with metadata and rows.
+
+    Attributes:
+        id: The report ID.
+        name: The report name.
+        state: Current state of the report (QUEUED, RUNNING, COMPLETED, FAILED).
+        start_time: Report start date.
+        end_time: Report end date.
+        granularity: Time granularity (DAILY or WEEKLY).
+        row: List of report rows with impression share data.
+    """
+
+    model_config = ConfigDict(populate_by_name=True, extra="ignore")
+
+    id: int
+    name: str | None = None
+    state: ImpressionShareReportStatus | str = Field(alias="state")
+    start_time: str | None = Field(default=None, alias="startTime")
+    end_time: str | None = Field(default=None, alias="endTime")
+    granularity: GranularityType | str | None = None
+    date_range: str | None = Field(default=None, alias="dateRange")
+    row: list[ImpressionShareReportRow] = Field(default_factory=list)
+    grand_totals: GrandTotals | None = Field(default=None, alias="grandTotals")
+
+    @property
+    def is_complete(self) -> bool:
+        """Check if the report has finished generating."""
+        return self.state == ImpressionShareReportStatus.COMPLETED
+
+    @property
+    def is_failed(self) -> bool:
+        """Check if the report generation failed."""
+        return self.state == ImpressionShareReportStatus.FAILED
+
+    def to_dataframe(self) -> "pd.DataFrame":
+        """Convert impression share report to a pandas DataFrame.
+
+        Returns:
+            A DataFrame with impression share data.
+
+        Raises:
+            ImportError: If pandas is not installed.
+        """
+        try:
+            import pandas as pd
+        except ImportError:
+            raise ImportError(
+                "pandas is required for to_dataframe(). "
+                "Install with: pip install asa-api-client[pandas]"
+            ) from None
+
+        rows_data: list[dict[str, Any]] = []
+
+        for row in self.row:
+            row_data: dict[str, Any] = {}
+
+            if row.metadata:
+                meta_dict = row.metadata.model_dump(by_alias=False, exclude_none=True)
+                if meta_dict.get("bid_amount"):
+                    row_data["bid"] = meta_dict["bid_amount"].get("amount")
+                    row_data["currency"] = meta_dict["bid_amount"].get("currency")
+                    del meta_dict["bid_amount"]
+                row_data.update(meta_dict)
+
+            # Add impression share fields
+            row_data["impression_share"] = row.impression_share
+            row_data["low_impression_share"] = row.low_impression_share
+            row_data["high_impression_share"] = row.high_impression_share
+            row_data["rank"] = row.rank
+            row_data["low_rank"] = row.low_rank
+            row_data["high_rank"] = row.high_rank
+            row_data["search_popularity"] = row.search_popularity
+
+            rows_data.append(row_data)
+
+        return pd.DataFrame(rows_data)

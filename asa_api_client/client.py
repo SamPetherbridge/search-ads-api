@@ -13,6 +13,7 @@ import httpx
 from asa_api_client.auth import Authenticator
 from asa_api_client.logging import get_logger
 from asa_api_client.resources.campaigns import CampaignResource
+from asa_api_client.resources.custom_reports import CustomReportResource
 from asa_api_client.resources.reports import ReportResource
 
 logger = get_logger(__name__)
@@ -34,6 +35,7 @@ class AppleSearchAdsClient:
         org_id: The Apple Search Ads organization ID.
         campaigns: Resource for managing campaigns.
         reports: Resource for generating reports.
+        custom_reports: Resource for impression share reports.
 
     Example:
         Basic usage::
@@ -134,6 +136,7 @@ class AppleSearchAdsClient:
         # Initialize resources
         self._campaigns = CampaignResource(self)
         self._reports = ReportResource(self)
+        self._custom_reports = CustomReportResource(self)
 
         logger.info(
             "AppleSearchAdsClient initialized for org_id=%d, base_url=%s",
@@ -260,6 +263,29 @@ class AppleSearchAdsClient:
                 )
         """
         return self._reports
+
+    @property
+    def custom_reports(self) -> CustomReportResource:
+        """Get the custom reports resource for impression share data.
+
+        Returns:
+            CustomReportResource for generating impression share reports.
+
+        Example:
+            Get impression share report::
+
+                from datetime import date, timedelta
+
+                report = client.custom_reports.get_impression_share(
+                    start_date=date.today() - timedelta(days=7),
+                    end_date=date.today() - timedelta(days=1),
+                )
+
+                for row in report.row:
+                    share = f"{row.low_impression_share}-{row.high_impression_share}%"
+                    print(f"{row.metadata.keyword}: {share}")
+        """
+        return self._custom_reports
 
     def close(self) -> None:
         """Close the HTTP clients and release resources.

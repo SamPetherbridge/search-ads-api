@@ -52,6 +52,11 @@ from asa_api_client.models.keywords import (
 )
 from asa_api_client.models.reports import (
     GranularityType,
+    ImpressionShareDateRange,
+    ImpressionShareReport,
+    ImpressionShareReportRequest,
+    ImpressionShareReportRow,
+    ImpressionShareReportStatus,
     ReportingRequest,
     ReportingResponse,
     ReportMetadata,
@@ -83,6 +88,11 @@ __all__ = [
     "ConditionOperator",
     "CpaGoal",
     "GranularityType",
+    "ImpressionShareDateRange",
+    "ImpressionShareReport",
+    "ImpressionShareReportRequest",
+    "ImpressionShareReportRow",
+    "ImpressionShareReportStatus",
     "Keyword",
     "KeywordCreate",
     "KeywordMatchType",
