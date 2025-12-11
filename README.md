@@ -2,8 +2,8 @@
 
 [![PyPI version](https://img.shields.io/pypi/v/asa-api-client.svg)](https://pypi.org/project/asa-api-client/)
 [![Python](https://img.shields.io/pypi/pyversions/asa-api-client.svg)](https://pypi.org/project/asa-api-client/)
-[![License](https://img.shields.io/github/license/SamPetherbridge/search-ads-api.svg)](https://github.com/SamPetherbridge/search-ads-api/blob/main/LICENSE)
-[![CI](https://github.com/SamPetherbridge/search-ads-api/actions/workflows/ci.yml/badge.svg)](https://github.com/SamPetherbridge/search-ads-api/actions/workflows/ci.yml)
+[![License](https://img.shields.io/github/license/SamPetherbridge/asa-api-client.svg)](https://github.com/SamPetherbridge/asa-api-client/blob/main/LICENSE)
+[![CI](https://github.com/SamPetherbridge/asa-api-client/actions/workflows/ci.yml/badge.svg)](https://github.com/SamPetherbridge/asa-api-client/actions/workflows/ci.yml)
 
 A modern, fully-typed Python client for the Apple Search Ads API with async support and Pydantic models.
 
