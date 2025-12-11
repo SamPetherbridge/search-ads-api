@@ -107,9 +107,7 @@ class CustomReportResource:
 
     async def _get_headers_async(self) -> dict[str, str]:
         """Get headers for async API requests."""
-        token = await self._client._authenticator.get_access_token_async(
-            self._async_http_client
-        )
+        token = await self._client._authenticator.get_access_token_async(self._async_http_client)
         return {
             "Authorization": token.authorization_header,
             "X-AP-Context": f"orgId={self._client.org_id}",

@@ -213,7 +213,7 @@ class Authenticator:
         }
 
         try:
-            client_secret = jwt.encode(
+            client_secret: str = jwt.encode(
                 payload,
                 self._private_key,
                 algorithm=ALGORITHM,
