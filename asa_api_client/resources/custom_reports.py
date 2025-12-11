@@ -7,6 +7,7 @@ import asyncio
 import builtins
 import csv
 import io
+import os
 import sys
 import time
 from datetime import date
@@ -171,6 +172,12 @@ class CustomReportResource:
         """
         url = self._build_url(path)
         headers = self._get_headers()
+
+        # Show request info if ASA_DEBUG is set
+        if os.environ.get("ASA_DEBUG"):
+            short_url = url.replace("https://api.searchads.apple.com/api/v5/", "")
+            print(f"[custom-reports] {method} {short_url}", file=sys.stderr)
+
         logger.debug("%s %s", method, url)
 
         last_exception: AppleSearchAdsError | None = None
@@ -284,40 +291,103 @@ class CustomReportResource:
             raise last_exception
         raise NetworkError("Request failed after all retries")
 
-    def list_reports(
-        self, limit: int = 100, offset: int = 0
-    ) -> "builtins.list[ImpressionShareReport]":
+    def list_reports(self) -> "builtins.list[ImpressionShareReport]":
         """List all impression share reports.
-
-        Args:
-            limit: Maximum number of reports to return.
-            offset: Number of reports to skip.
 
         Returns:
             List of impression share reports.
         """
-        params = {"limit": limit, "offset": offset}
-        data = self._request("GET", "", params=params)
+        # Apple's custom-reports endpoint doesn't support pagination params
+        data = self._request("GET", "")
 
         reports: builtins.list[ImpressionShareReport] = []
         for item in data.get("data", []):
             reports.append(ImpressionShareReport.model_validate(item))
         return reports
 
-    async def list_reports_async(
-        self, limit: int = 100, offset: int = 0
-    ) -> "builtins.list[ImpressionShareReport]":
-        """List all impression share reports asynchronously.
+    def find_existing_report(
+        self,
+        start_date: date,
+        end_date: date,
+        granularity: GranularityType = GranularityType.DAILY,
+    ) -> ImpressionShareReport | None:
+        """Find an existing completed report covering the requested date range.
+
+        Apple limits impression share reports to 10 per day. This method
+        helps avoid creating duplicate reports by finding existing ones.
+
+        A report is reusable if:
+        1. Exact match: covers the full requested range, OR
+        2. Close match: starts on/before our start AND ends within 1 day of our end
+           (useful when today just rolled over but data isn't available yet)
 
         Args:
-            limit: Maximum number of reports to return.
-            offset: Number of reports to skip.
+            start_date: Report start date.
+            end_date: Report end date.
+            granularity: DAILY or WEEKLY.
+
+        Returns:
+            Best matching report if found, None otherwise.
+        """
+        try:
+            reports = self.list_reports()
+
+            # Find reports that cover our date range (with 1-day tolerance on end)
+            candidates: builtins.list[tuple[ImpressionShareReport, int]] = []
+            for report in reports:
+                if report.state != "COMPLETED":
+                    continue
+                if report.granularity != granularity.value:
+                    continue
+
+                # Parse report dates
+                if not report.start_time or not report.end_time:
+                    continue
+                try:
+                    report_start = date.fromisoformat(report.start_time)
+                    report_end = date.fromisoformat(report.end_time)
+                except (ValueError, TypeError):
+                    continue
+
+                # Check start date coverage
+                if report_start > start_date:
+                    continue
+
+                # Check end date coverage (allow 1-day tolerance for day rollover)
+                days_short = (end_date - report_end).days
+                if days_short > 1:  # More than 1 day short, skip
+                    continue
+
+                # Score: prefer exact matches (0 days short) over close matches
+                candidates.append((report, days_short))
+
+            if not candidates:
+                return None
+
+            # Sort by: 1) days short (prefer 0), 2) range size (prefer smaller)
+            def sort_key(
+                item: tuple[ImpressionShareReport, int],
+            ) -> tuple[int, int]:
+                report, days_short = item
+                # These are guaranteed non-None since we filtered above
+                r_start = date.fromisoformat(report.start_time)  # type: ignore[arg-type]
+                r_end = date.fromisoformat(report.end_time)  # type: ignore[arg-type]
+                range_size = (r_end - r_start).days
+                return (days_short, range_size)
+
+            best = min(candidates, key=sort_key)
+            return best[0]
+        except Exception:
+            return None
+
+    async def list_reports_async(self) -> "builtins.list[ImpressionShareReport]":
+        """List all impression share reports asynchronously.
 
         Returns:
             List of impression share reports.
         """
-        params = {"limit": limit, "offset": offset}
-        data = await self._request_async("GET", "", params=params)
+        # Apple's custom-reports endpoint doesn't support pagination params
+        data = await self._request_async("GET", "")
 
         reports: builtins.list[ImpressionShareReport] = []
         for item in data.get("data", []):
@@ -635,11 +705,16 @@ class CustomReportResource:
         country_codes: builtins.list[str] | None = None,
         poll_interval: float = 2.0,
         timeout: float = 300.0,
+        reuse_existing: bool = True,
     ) -> ImpressionShareReport:
         """Create an impression share report and wait for results.
 
         This is a convenience method that creates a report and polls
         until it's complete.
+
+        NOTE: Apple limits impression share reports to 10 per day. By default,
+        this method will check for an existing report with matching date range
+        and reuse it to conserve your daily quota.
 
         Args:
             start_date: Report start date (max 12 weeks ago).
@@ -650,6 +725,7 @@ class CustomReportResource:
             country_codes: Optional list of country codes to filter by.
             poll_interval: Seconds between status checks.
             timeout: Maximum seconds to wait.
+            reuse_existing: If True, reuse existing report with same date range.
 
         Returns:
             The completed report with impression share data.
@@ -669,6 +745,21 @@ class CustomReportResource:
                     share = f"{row.low_impression_share}-{row.high_impression_share}%"
                     print(f"{keyword}: {share}")
         """
+        # Check for existing report to avoid hitting daily limit
+        if reuse_existing and not country_codes:
+            existing = self.find_existing_report(start_date, end_date, granularity)
+            if existing:
+                logger.info(f"Reusing existing report {existing.id}")
+                if os.environ.get("ASA_DEBUG"):
+                    print(
+                        f"[custom-reports] Reusing existing report {existing.id}",
+                        file=sys.stderr,
+                    )
+                # Download data if needed
+                if existing.download_uri and not existing.row:
+                    existing.row = self._download_csv(existing.download_uri)
+                return existing
+
         report = self.create_impression_share(
             start_date=start_date,
             end_date=end_date,

@@ -5,6 +5,8 @@ including HTTP request handling, error mapping, and pagination.
 """
 
 import asyncio
+import os
+import sys
 import time
 from collections.abc import AsyncIterator, Iterator
 from typing import TYPE_CHECKING, Any, Generic, TypeVar
@@ -40,6 +42,9 @@ DEFAULT_INITIAL_DELAY = 5.0  # seconds - Apple rate limits often need longer wai
 DEFAULT_MAX_DELAY = 120.0  # seconds
 DEFAULT_BACKOFF_FACTOR = 2.0
 RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
+
+# Request counter for debugging
+_request_count = 0
 
 
 class BaseResource(Generic[T, CreateT, UpdateT]):
@@ -265,8 +270,16 @@ class BaseResource(Generic[T, CreateT, UpdateT]):
         Raises:
             AppleSearchAdsError: If the request fails after all retries.
         """
+        global _request_count
+        _request_count += 1
+
         url = self._build_url(path)
         headers = self._get_headers()
+
+        # Show request info if ASA_DEBUG is set
+        if os.environ.get("ASA_DEBUG"):
+            short_url = url.replace("https://api.searchads.apple.com/api/v5/", "")
+            print(f"[{_request_count}] {method} {short_url}", file=sys.stderr)
 
         logger.debug("%s %s", method, url)
 
@@ -305,6 +318,10 @@ class BaseResource(Generic[T, CreateT, UpdateT]):
                     max_retries + 1,
                     delay,
                 )
+                # Print visible retry message to stderr
+                msg = f"⏳ Rate limited ({response.status_code}), "
+                msg += f"attempt {attempt + 1}/{max_retries + 1}, retrying in {delay:.0f}s..."
+                print(msg, file=sys.stderr)
                 time.sleep(delay)
                 continue
 
